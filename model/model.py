@@ -115,6 +115,7 @@ class gsrs():
 
         x = np.c_[np.array(test), group_to_index(test[0], ug),
                   group_to_index(test[1], ig)]
+        print(x)
         x[x[:, 2] >= len(self.s), 2] = 0
         x[x[:, 3] >= len(self.t), 3] = 0
         results = []
@@ -145,10 +146,11 @@ class gsrs():
                   group_to_index(test[1], ig)]
         x[x[:, 2] >= len(self.s), 2] = 0
         x[x[:, 3] >= len(self.t), 3] = 0
-        print(x)
         # Create a DataFrame to store user-item-rating results
-        results_df = pd.DataFrame(columns=["user_id", "item_id", "predicted_rating"])
-        for row in x:
+        users = []
+        items = []
+        ratings = []
+        for i,row in enumerate(x)       :
             # Predict the rating as before
             result = self.global_bias  
             result += np.sum(np.multiply(self.s[row[2]], self.t[row[3]]))
@@ -164,8 +166,10 @@ class gsrs():
                 result += np.mean(self.item_bias)
             if row[0] <= umax and row[1] <= imax:
                 result += np.sum(np.multiply(self.p[row[0]], self.q[row[1]]))
-            results_df = results_df.append({"user_id": row[0], "item_id": row[1], "predicted_rating": result},ignore_index=True)
-
+            users.append(row[0])
+            items.append(row[1])
+            ratings.append(result)
+        results_df = pd.DataFrame(data={'user': users, 'item': items, 'rating': ratings})
         return results_df
     def score(self, data, label)->float:
         return rmse_evaluate(label.reshape(-1, 1), np.array(self.predict(data)).reshape((-1, 1)))
